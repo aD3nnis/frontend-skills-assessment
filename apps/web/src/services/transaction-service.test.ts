@@ -53,6 +53,31 @@ describe("createTransaction errors", () => {
   })
 })
 
+describe("createTransaction error body shape", () => {
+  it.each([
+    ["a string", "oops"],
+    ["an array", ["amount", "bad"]],
+    ["a number", 5],
+  ])("ignores `fields` that is %s", async (_label, fields) => {
+    respondWith(JSON.stringify({ error: "Boom", fields }), 400)
+    const err = await failure()
+    expect(err.message).toBe("Boom")
+    expect(err.fields).toEqual({})
+  })
+
+  it("keeps only string messages inside `fields`", async () => {
+    respondWith(JSON.stringify({ fields: { amount: "Too big", merchantName: { nested: 1 } } }), 400)
+    const err = await failure()
+    expect(err.fields).toEqual({ amount: "Too big" })
+  })
+
+  it("ignores an `error` that is not a string", async () => {
+    respondWith(JSON.stringify({ error: { code: 502 } }), 502)
+    const err = await failure()
+    expect(err.message).toBe("Could not create the transaction")
+  })
+})
+
 describe("createTransaction success", () => {
   it("returns the created transaction", async () => {
     respondWith(JSON.stringify({ id: "txn_010001", amount: 12.5 }), 201)

@@ -81,6 +81,15 @@ Checked the diff against this file and Task 3. All criteria met except "whole fl
 - Skipped, low: POST 400 route wiring still untested (`index.ts` listens on import); client length rule counts untrimmed whitespace; error alert stays until the next submit; error body fields not shape-checked; created transactions get surcharge 0; `let cents` sentinel in `validation.ts`; field-error type duplicated between web and API.
 - After the fixes: API 21 and web 29 tests pass, lint 0 errors, both typechecks clean.
 
+### Second `/code-review medium main` (2026-11-19)
+6 findings, none blocking. Three fixed, plus one incidentally:
+- Fixed: the 500 branch returned `err.stack` and `err.message` to the client. `error-handler.ts` now logs the error and answers `{"error":"Internal server error"}`. Test written first (failed), passes now.
+- Fixed: no `res.headersSent` check. The handler now calls `next(err)` in that case. Test written first (failed), passes now.
+- Fixed: a non-object `fields` (string, array, number) was split letter by letter. Fixed at the source in `createTransaction` (`pickFieldMessages`, plus a string check on `error`) rather than in `splitFieldErrors`, so every caller gets a clean `ApiError`. 5 new tests failed first, pass now.
+- Fixed incidentally: the `console.error` spy in `error-handler.test.ts` is now restored.
+- Skipped: `index.ts` wiring (`app.use(errorHandler)`, the 400 guard) is still untested because the file listens on import; the `inFlight` double-submit ref still has no test (no jsdom). Both fit under With more time.
+- After the fixes: API 22 and web 34 tests pass, lint 0 errors, both typechecks clean. A third `/code-review` was not run.
+
 ## Map
 - Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
 

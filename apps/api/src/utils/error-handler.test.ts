@@ -3,11 +3,12 @@ import type { NextFunction, Request, Response } from "express"
 
 import { errorHandler } from "./error-handler.js"
 
-const run = (err: Error) => {
+const run = (err: Error, headersSent = false) => {
   const json = vi.fn()
   const status = vi.fn(() => ({ json }))
-  errorHandler(err, {} as Request, { status } as unknown as Response, vi.fn() as unknown as NextFunction)
-  return { status, json }
+  const next = vi.fn()
+  errorHandler(err, {} as Request, { status, headersSent } as unknown as Response, next as unknown as NextFunction)
+  return { status, json, next }
 }
 
 describe("errorHandler", () => {
@@ -29,10 +30,21 @@ describe("errorHandler", () => {
     expect(json).toHaveBeenCalledWith({ error: "request entity too large" })
   })
 
-  it("still answers unexpected errors with 500", () => {
-    vi.spyOn(console, "error").mockImplementation(() => {})
-    const { status, json } = run(new Error("boom"))
+  it("answers unexpected errors with a generic 500 and logs the real one, without leaking it", () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    const err = new Error("ENOENT: /srv/app/secret/path")
+    const { status, json } = run(err)
     expect(status).toHaveBeenCalledWith(500)
-    expect(json).toHaveBeenCalledWith(expect.objectContaining({ error: "boom" }))
+    expect(json).toHaveBeenCalledWith({ error: "Internal server error" })
+    expect(log).toHaveBeenCalledWith(err)
+    log.mockRestore()
+  })
+
+  it("hands the error to Express when the response has already started", () => {
+    const err = new Error("boom after headers")
+    const { status, json, next } = run(err, true)
+    expect(next).toHaveBeenCalledWith(err)
+    expect(status).not.toHaveBeenCalled()
+    expect(json).not.toHaveBeenCalled()
   })
 })
