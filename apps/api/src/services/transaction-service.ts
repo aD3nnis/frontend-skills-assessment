@@ -42,21 +42,19 @@ export interface TransactionPage {
 }
 
 const matchesSearch = (t: Transaction, term: string): boolean =>
-  t.merchantName.toLowerCase().includes(term) ||
-  t.id.toLowerCase().includes(term) ||
-  t.cardBrand.toLowerCase().includes(term) ||
-  t.status.toLowerCase().includes(term)
+  [t.merchantName, t.id, t.cardBrand, t.status].some((field) => field.toLowerCase().includes(term))
 
-// Newest first. Many rows share a timestamp, so ties fall back to id: without a total order a row could
-// appear on two pages or none while paging.
-const byNewestThenId = (a: Transaction, b: Transaction): number =>
-  a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0
-
-// Filters before sorting so a narrow search only sorts its matches. `totalProcessed` covers every match, not just
-// the page, so the summary stays right however the caller pages. Does not mutate `transactions`.
+// Filters before sorting so a narrow search only sorts its matches. Newest first; many rows share a timestamp, so
+// ties fall back to id: without a total order a row could appear on two pages or none while paging.
+// `totalProcessed` covers every match, not just the page, so the summary stays right however the caller pages.
+// Does not mutate `transactions` (filter and orderBy both return new arrays).
 export const listTransactions = (transactions: Transaction[], { q, page, pageSize }: ListParams): TransactionPage => {
   const term = q.trim().toLowerCase()
-  const matches = transactions.filter((t) => matchesSearch(t, term)).sort(byNewestThenId)
+  const matches = _.orderBy(
+    transactions.filter((t) => matchesSearch(t, term)),
+    ["createdAt", "id"],
+    ["desc", "asc"],
+  )
   const start = (page - 1) * pageSize
   return {
     transactions: matches.slice(start, start + pageSize),

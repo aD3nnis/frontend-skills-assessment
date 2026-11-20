@@ -6,8 +6,7 @@ import { SearchOutlined } from "@ant-design/icons"
 import { SummaryBar } from "../components/SummaryBar"
 import { TransactionList } from "../components/TransactionList"
 import { TransactionModal } from "../components/TransactionModal"
-import { useDebouncedValue } from "../hooks/useDebouncedValue"
-import { useTransactionPage } from "../hooks/useTransactions"
+import { useTransactionPage } from "../hooks/useTransactionPage"
 import type { Transaction } from "../models/transaction"
 import { buildListSearch, parseListParams } from "../utils/list-params"
 
@@ -20,29 +19,33 @@ export const TransactionsPage = () => {
   const { q, page } = parseListParams(searchParams)
   const [input, setInput] = useState(q)
   const [selected, setSelected] = useState<Transaction | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const { data, loading, error, retry } = useTransactionPage({ q, page, pageSize: PAGE_SIZE })
-  const debouncedInput = useDebouncedValue(input.trim(), SEARCH_DEBOUNCE_MS)
 
-  // The debounce effect below must run only when the typed text settles, not when the URL changes (the browser's
-  // back button would otherwise be overwritten), so it reads the current URL state through a ref.
-  const latest = useRef({ q, setSearchParams })
-  useEffect(() => {
-    latest.current = { q, setSearchParams }
-  })
-
-  // Search text settled: put it in the URL, back on page 1 (page 7 of the old search means nothing for a new one).
+  // Only typing starts this timer, so a URL change on its own (Back button, pasted link) never writes back to the URL.
+  // The URL gets the search text once typing pauses, on page 1 (page 7 of the old search means nothing for a new one).
   // `replace` keeps each search term out of the history, so Back still goes through pages and visits.
-  useEffect(() => {
-    const { q: currentQ, setSearchParams: setParams } = latest.current
-    if (debouncedInput === currentQ) return
-    setParams(buildListSearch({ q: debouncedInput, page: 1 }), { replace: true })
-  }, [debouncedInput])
+  const handleSearchChange = (value: string) => {
+    setInput(value)
+    clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      const term = value.trim()
+      // Typing only a space (or reverting to the same text) must not bounce the user back to page 1
+      setSearchParams((prev) => (parseListParams(prev).q === term ? prev : new URLSearchParams(buildListSearch({ q: term, page: 1 }))), {
+        replace: true,
+      })
+    }, SEARCH_DEBOUNCE_MS)
+  }
 
-  // The URL changed on its own (back button, pasted link): show its search text in the input
+  // The URL changed on its own: show its search text in the input, and drop any pending write from earlier typing
+  // so it can't overwrite where the user just navigated. The trim comparison keeps a trailing space the user typed.
   useEffect(() => {
+    clearTimeout(searchTimer.current)
     setInput((current) => (current.trim() === q ? current : q))
   }, [q])
+
+  useEffect(() => () => clearTimeout(searchTimer.current), [])
 
   // A link to a page past the end (page=999) loads an empty page; move to the last real page instead
   useEffect(() => {
@@ -62,7 +65,7 @@ export const TransactionsPage = () => {
           aria-label="Search transactions"
           placeholder="Search merchant, id, card, status..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </header>
 
@@ -81,7 +84,13 @@ export const TransactionsPage = () => {
         />
       )}
 
-      {data ? (
+      {!data && loading && (
+        <div className="app-loading">
+          <Spin size="large" />
+        </div>
+      )}
+
+      {data && (
         // Keeps showing the previous results (dimmed by the spinner) while the next page loads
         <Spin spinning={loading}>
           <SummaryBar total={data.total} totalProcessed={data.totalProcessed} />
@@ -101,12 +110,6 @@ export const TransactionsPage = () => {
             />
           </div>
         </Spin>
-      ) : (
-        loading && (
-          <div className="app-loading">
-            <Spin size="large" />
-          </div>
-        )
       )}
 
       <TransactionModal transaction={selected} onClose={() => setSelected(null)} />
