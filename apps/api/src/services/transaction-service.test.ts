@@ -49,9 +49,9 @@ describe("sumProcessedAmount", () => {
     expect(sumProcessedAmount([row])).toBe(103)
   })
 
-  it("adds in cents so 0.1 + 0.2 is exactly 0.3", () => {
-    const rows = [make("a", "APPROVED", 0.1), make("b", "APPROVED", 0.2)]
-    expect(sumProcessedAmount(rows)).toBe(0.3)
+  it("adds in cents so 1.15 + 2.30 is exactly 3.45", () => {
+    const rows = [make("a", "APPROVED", 1.15), make("b", "APPROVED", 2.3)]
+    expect(sumProcessedAmount(rows)).toBe(3.45)
   })
 
   it("returns 0 for an empty list and for a list with no APPROVED rows", () => {
