@@ -80,6 +80,16 @@ Ran `npm test` (API 42, web 12), lint (0 errors, same 2 warnings) and `tsc` (cle
 - Fixed: after a failed request the old list and totals stayed on screen looking current under the new search text. They are now dimmed (`results-stale`, opacity 0.45) while the error banner shows, and the dimming clears when a request succeeds. Checked in the browser by making one search fail: dimmed with the banner and "Retry", then cleared by a working search. This goes a little beyond criterion 9 as written, which only asks for an error with Retry; the user chose to fix it because it was small.
 - Not fixed, for the PR's known gaps: no automated tests for debounce, stale responses or the error state (criteria 7 and 9; the user chose not to add jsdom); the page-past-the-end redirect, the empty-state message, `key={t.id}`, the `app.ts` split, the `computeTotal` removal and the removed query `console.log` are beyond the spec's literal text and are listed here; no length cap on `q`; `PAGE_SIZE` is 25 in the web and the API default separately; `createTransaction` does not check the response status (existed before this branch); an empty `?page=` falls back to the default instead of a 400, by design.
 
+### Code review (`/code-review medium main`, 2026-11-19, round 1)
+7 findings, none blocking.
+1. Fixed (`1ee45bf`): the `[q]` sync effect also ran for the page's own URL write, so a key typed between the write and React's commit was overwritten and its pending search cancelled. Reproduced first in the browser by injecting "ab" inside the router's `history.replaceState` call (the box reverted to "a", URL stayed `?q=a`). The page now records the text it wrote (`ownWriteQ`) and the effect skips that echo; after the fix the same injection leaves the box on "ab" and the URL on `?q=ab`. An outside URL change still updates the box, and a later outside change back to the same text still syncs (flag cleared once seen). Tests (42 API, 12 web), lint (same 2 warnings) and types unchanged. No automated test: it needs the DOM tooling that was left out.
+2. Skipped: the past-the-end redirect guard compares only `data.page` with the URL's page, not the search. Not reachable from the app's own controls today because typing resets to page 1.
+3. Skipped: the search timer reads `window.location.search`, which assumes a browser-history router (`BrowserRouter`, `main.tsx:13`). Revisit if the router type changes.
+4. Skipped: no automated tests for debounce, stale responses or the error state (criteria 7 and 9); the user chose pure helpers over adding jsdom.
+5. Skipped: a padded `?q=%20visa%20` stays untrimmed in the box and address bar; results are right because the API trims. Cosmetic.
+6. Skipped: each list request filters, sorts and sums all matches (a few ms at 10,000 rows); worth revisiting around 100k rows.
+7. Skipped: page size 25 is defined in the web and as the API default.
+
 ## Reviewed by hand
 Walkthrough depth chosen: the riskiest few.
 - `apps/api/src/services/transaction-service.ts`: user said `total` is the number of matches and does not change with the page, and `totalProcessed` covers all matches and is wider than the page. Corrected: page 3 is rows 51 to 75 (the next 25), not everything left over; confirmed on real data (pages 3 and 4 each 25 rows, page 5 none).
