@@ -32,3 +32,7 @@
 - `fetchTransactions` and `createTransaction` still don't check `rsp.ok`; they belong to Tasks 1 and 3.
 - `VOIDED` isn't in `TransactionStatus`; the page degrades gracefully, but the enum or the data should be fixed.
 - I did not memoize list rows or fix `key={i}`; that overlaps Task 1.
+- The stale-response guard in `useTransaction` has no automated test (removing it left all 9 tests passing); I checked it by hand. Testing it needs a DOM test setup.
+- Going back from the detail page to the list resets the search box and refetches everything, because the search lives in component state. Putting the search term in the URL (Task 1's area) would fix it.
+- Any 404 shows "Transaction not found", including one from a misrouted `/api`; a stricter check would look at the response body.
+- Each row's link reads the whole row to a screen reader. Fine for keyboard use, but worth a better accessible name.

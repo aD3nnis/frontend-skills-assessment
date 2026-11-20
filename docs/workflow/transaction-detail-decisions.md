@@ -47,6 +47,36 @@ Run in this worktree on 2026-11-19 with the API on port 4100 and the web on 3100
 
 `/transactions/new` still shows the form (regression check for the route order).
 
+### Break-it checks
+Each line was broken alone, `npm test -w @assessment/web` run, then the file restored (`git diff` empty after each).
+
+| Criterion | Line broken | Test that failed |
+|---|---|---|
+| 3. Not found | `transaction-service.ts:18` (404 check removed) | "throws TransactionNotFoundError on 404…" |
+| 4. Failure is not not-found | `transaction-service.ts:19` (`rsp.ok` check removed) | "throws a plain Error, not TransactionNotFoundError, on a 500" |
+| 9. Odd ids encoded | `transaction-service.ts:17` (`encodeURIComponent` removed) | "encodes the id so characters like / and spaces…" |
+| 1. Returns the transaction | `transaction-service.ts:20` (returns `{}`) | "returns the transaction on 200" |
+| 4. Network failure | `transaction-service.ts:17` (rejection turned into not-found) | "lets a network failure reject as a plain Error" |
+| 8. No stale data | `useTransaction.ts:23,26` (`if (!stale)` removed) | **none failed: criterion 8 is unproven by tests**; checked by hand only (decided with the user: leave it, list the gap in `NOTES.md`; testing it needs DOM test tooling) |
+
+Criteria 1-2, 5-7 and the route are browser-checked only; no automated test covers them.
+
+## Reviewed by hand
+Depth chosen: riskiest few.
+- `apps/web/src/services/transaction-service.ts`: the user answered the 404/500/network-down question with the generic error message (right for 500 and network-down, not for 404, which gets "Transaction not found"); on why only the new function checks `rsp.ok` the user said "I don't know" and Claude explained it.
+- `apps/web/src/hooks/useTransaction.ts`: Claude asked what goes wrong without the stale check; the user moved on to the break-it checks instead of answering. Claude's answer: the id tag stops wrong data, the stale flag stops losing the right data.
+- Read by Claude only: `apps/web/src/pages/TransactionDetailPage.tsx`, `apps/web/src/components/TransactionList.tsx`, `apps/web/src/pages/TransactionsPage.tsx`, `apps/web/src/App.tsx`, `apps/web/src/App.css`, `apps/web/src/services/transaction-service.test.ts`, deleted `TransactionModal.tsx`.
+
+## Second opinion (Claude)
+1. Going back to the list loses the search and refetches everything (search is local state, `TransactionsPage.tsx:11`). Task 1's area; noted in `NOTES.md`.
+2. Any 404 shows "not found" (`transaction-service.ts:18`). Minor; noted.
+3. Errors were swallowed silently (`useTransaction.ts:25-26`). **Fixed** with a `console.error` for non-not-found failures.
+4. Row link text is the whole row for screen readers (`TransactionList.tsx:27`). Noted for Task 5.
+5. No page title on the detail page. Skipped.
+
+## Map
+- Deferred: the repo has code and no `docs/workflow/map.md`. The user chose to defer `/map` (2026-11-19) as not needed for tonight's change. Until it runs, the map is missing, so "Where" in the spec came from reading the code directly.
+
 ## Not verified
 - The opening lag has not been measured by Claude, only reasoned from the code.
 - Row-link cost: each of the 10,000 list rows is now a react-router `Link` (per-row router hooks), which `/simplify`'s efficiency review flagged as possibly heavier than the old plain rows. Not measured. Left as is (2026-11-19, user's call) because Task 1's pagination cuts the row count; alternative if it still matters: plain `<a href>` rows with one delegated click handler.
