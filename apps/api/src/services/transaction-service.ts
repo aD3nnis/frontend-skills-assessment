@@ -16,6 +16,17 @@ export interface NewTransactionInput {
   amount: number
 }
 
+// Allowlist on purpose: DECLINED, PENDING, REFUNDED, the data's unknown VOIDED status and any
+// future status stay out of "processed" until someone decides they belong.
+// The web app mirrors this rule in apps/web/src/utils/format.ts (computeTotal); change both.
+export const isProcessed = (t: { status: string }): boolean => t.status === TransactionStatus.APPROVED
+
+// Adds in integer cents because float addition drifts (0.1 + 0.2 = 0.30000000000000004).
+export const sumProcessedAmount = (transactions: Transaction[]): number => {
+  const cents = _.sumBy(transactions.filter(isProcessed), (t) => Math.round(t.total * 100))
+  return cents / 100
+}
+
 export const createTransactionService = () => {
   const transactions = loadTransactions()
 
@@ -25,7 +36,7 @@ export const createTransactionService = () => {
 
   const getSummary = (): TransactionSummary => ({
     count: transactions.length,
-    totalVolume: _.round(_.sumBy(transactions, "amount"), 2),
+    totalVolume: sumProcessedAmount(transactions),
     totalSurcharge: _.round(_.sumBy(transactions, "surcharge"), 2),
   })
 

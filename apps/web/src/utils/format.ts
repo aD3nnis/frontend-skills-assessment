@@ -1,3 +1,4 @@
+import { TransactionStatus } from "../models/transaction"
 import type { Transaction } from "../models/transaction"
 
 export const formatCurrency = (value: number): string => {
@@ -8,10 +9,15 @@ export const formatDate = (iso: string): string => {
   return new Date(iso).toLocaleDateString("en-US")
 }
 
+// Mirrors isProcessed / sumProcessedAmount in apps/api/src/services/transaction-service.ts (the apps share
+// no package, so change both together). Only APPROVED counts, as an allowlist, so VOIDED and any
+// unknown status stay out. Sums `total` in integer cents because float += drifts (0.1 + 0.2).
 export const computeTotal = (transactions: Transaction[]): number => {
-  let total = 0
+  let cents = 0
   for (const t of transactions) {
-    total += t.amount
+    if (t.status === TransactionStatus.APPROVED) {
+      cents += Math.round(t.total * 100)
+    }
   }
-  return total
+  return cents / 100
 }
