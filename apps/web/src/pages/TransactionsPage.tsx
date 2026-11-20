@@ -20,6 +20,8 @@ export const TransactionsPage = () => {
   const [input, setInput] = useState(q)
   const [selected, setSelected] = useState<Transaction | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // The search text this page itself last wrote to the URL, until the `q` effect below has seen it come back
+  const ownWriteQ = useRef<string | undefined>(undefined)
 
   const { data, loading, error, retry } = useTransactionPage({ q, page, pageSize: PAGE_SIZE })
 
@@ -35,7 +37,10 @@ export const TransactionsPage = () => {
       // undo a page click made while the timer was pending.
       // Typing only a space (or reverting to the same text) must not bounce the user back to page 1.
       const currentQ = parseListParams(new URLSearchParams(window.location.search)).q
-      if (currentQ !== term) setSearchParams(buildListSearch({ q: term, page: 1 }), { replace: true })
+      if (currentQ !== term) {
+        ownWriteQ.current = term
+        setSearchParams(buildListSearch({ q: term, page: 1 }), { replace: true })
+      }
     }, SEARCH_DEBOUNCE_MS)
   }
 
@@ -43,7 +48,15 @@ export const TransactionsPage = () => {
   // drop the pending write, which belonged to the old text. A change to the page alone does not run this: the typed
   // text stays in the input and its pending write still applies, so the box and the URL end up agreeing.
   // The trim comparison keeps a trailing space the user typed.
+  // The page's own write also changes `q`, and must not run this: a key typed between the write and this effect
+  // would be overwritten and its pending write cancelled. `ownWriteQ` marks that echo and is cleared once seen,
+  // so a later Back to the same text still counts as an outside change.
   useEffect(() => {
+    if (q === ownWriteQ.current) {
+      ownWriteQ.current = undefined
+      return
+    }
+    ownWriteQ.current = undefined
     clearTimeout(searchTimer.current)
     setInput((current) => (current.trim() === q ? current : q))
   }, [q])
