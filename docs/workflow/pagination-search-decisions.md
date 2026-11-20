@@ -74,6 +74,12 @@ Every break was restored, and the diff showed no leftover change each time. Crit
 - Route 400 had no test: fixed by the `app.ts` split and `app.test.ts` (42 API tests now pass).
 - Not fixed, per "fix what's necessary, nothing out of scope": a padded URL (`?q=%20visa%20`) keeps its spaces in the input and address bar while the API trims, so results are right (cosmetic); `unshift` in `create` no longer affects ordering (harmless); no length cap on `q`.
 
+### Reviewer subagent (against the spec, 2026-11-19)
+Ran `npm test` (API 42, web 12), lint (0 errors, same 2 warnings) and `tsc` (clean) on its own. Criteria 1, 2, 3, 4, 5, 11 and 12 met with named tests; 10 met for parsing, by hand for reload and paste; 6, 7, 8 and 9 partly met because they rest on manual checks. It did not run the app.
+- Criterion 8: the reviewer found no recorded comparison. The comparison was run (seven terms, identical counts and totals, under "How it was verified"), but its script lived in a scratch folder and is not in the repo.
+- Fixed: after a failed request the old list and totals stayed on screen looking current under the new search text. They are now dimmed (`results-stale`, opacity 0.45) while the error banner shows, and the dimming clears when a request succeeds. Checked in the browser by making one search fail: dimmed with the banner and "Retry", then cleared by a working search. This goes a little beyond criterion 9 as written, which only asks for an error with Retry; the user chose to fix it because it was small.
+- Not fixed, for the PR's known gaps: no automated tests for debounce, stale responses or the error state (criteria 7 and 9; the user chose not to add jsdom); the page-past-the-end redirect, the empty-state message, `key={t.id}`, the `app.ts` split, the `computeTotal` removal and the removed query `console.log` are beyond the spec's literal text and are listed here; no length cap on `q`; `PAGE_SIZE` is 25 in the web and the API default separately; `createTransaction` does not check the response status (existed before this branch); an empty `?page=` falls back to the default instead of a 400, by design.
+
 ## Reviewed by hand
 Walkthrough depth chosen: the riskiest few.
 - `apps/api/src/services/transaction-service.ts`: user said `total` is the number of matches and does not change with the page, and `totalProcessed` covers all matches and is wider than the page. Corrected: page 3 is rows 51 to 75 (the next 25), not everything left over; confirmed on real data (pages 3 and 4 each 25 rows, page 5 none).
