@@ -1,15 +1,16 @@
 import { Tag } from "antd"
+import { Link } from "react-router-dom"
 
 import type { Transaction } from "../models/transaction"
 import { formatCurrency, formatDate } from "../utils/format"
+import { LIST_LINK_STATE } from "../utils/list-state"
 import { statusTagColor } from "../utils/status"
 
 interface TransactionListProps {
   transactions: Transaction[]
-  onSelect: (transaction: Transaction) => void
 }
 
-export const TransactionList = ({ transactions, onSelect }: TransactionListProps) => {
+export const TransactionList = ({ transactions }: TransactionListProps) => {
   return (
     <div className="transaction-list">
       <div className="transaction-row transaction-header">
@@ -22,8 +23,14 @@ export const TransactionList = ({ transactions, onSelect }: TransactionListProps
         <span>Status</span>
         <span>Date</span>
       </div>
-      {transactions.map((t, i) => (
-        <div className="transaction-row" key={i} onClick={() => onSelect(t)}>
+      {transactions.map((t) => (
+        // A real link, so the row is reachable and activatable from the keyboard and opens in a new tab
+        <Link
+          className="transaction-row"
+          key={t.id}
+          to={`/transactions/${encodeURIComponent(t.id)}`}
+          state={LIST_LINK_STATE}
+        >
           <span className="mono">{t.id}</span>
           <span>{t.merchantName}</span>
           <span>{t.cardBrand}</span>
@@ -34,7 +41,7 @@ export const TransactionList = ({ transactions, onSelect }: TransactionListProps
             <Tag color={statusTagColor(t.status)}>{t.status}</Tag>
           </span>
           <span>{formatDate(t.createdAt)}</span>
-        </div>
+        </Link>
       ))}
     </div>
   )

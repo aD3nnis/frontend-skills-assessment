@@ -1,19 +1,16 @@
 import { Statistic } from "antd"
 
-import type { Transaction } from "../models/transaction"
-import { computeTotal } from "../utils/format"
-
 interface SummaryBarProps {
-  transactions: Transaction[]
+  // Both cover every transaction matching the search, not only the rows on the current page; the API computes them
+  total: number
+  totalProcessed: number
 }
 
-export const SummaryBar = ({ transactions }: SummaryBarProps) => {
-  const total = computeTotal(transactions)
-
+export const SummaryBar = ({ total, totalProcessed }: SummaryBarProps) => {
   return (
     <div className="summary-bar">
-      <Statistic title="Transactions" value={transactions.length} />
-      <Statistic title="Total processed" value={total} precision={2} prefix="$" />
+      <Statistic title="Transactions" value={total} />
+      <Statistic title="Total processed" value={totalProcessed} precision={2} prefix="$" />
     </div>
   )
 }
