@@ -52,6 +52,14 @@ body {
   margin-top: 0;
 }
 
+.transaction-detail {
+  max-width: 640px;
+}
+
+.transaction-detail h2 {
+  margin-top: 0;
+}
+
 .form-field {
   margin-bottom: 12px;
 }
