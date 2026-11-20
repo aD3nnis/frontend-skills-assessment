@@ -16,9 +16,9 @@ export interface NewTransactionInput {
   amount: number
 }
 
-// Allowlist on purpose: DECLINED, PENDING, REFUNDED, the data's unknown VOIDED status and any
-// future status stay out of "processed" until someone decides they belong.
-// The web app mirrors this rule in apps/web/src/utils/format.ts (computeTotal); change both.
+// Allowlist on purpose: only APPROVED counts, so DECLINED, PENDING, REFUNDED, the data's unknown
+// VOIDED and any future status stay out. The web mirrors this in apps/web/src/utils/format.ts
+// (computeTotal); change both.
 export const isProcessed = (t: { status: string }): boolean => t.status === TransactionStatus.APPROVED
 
 // Adds in integer cents because float addition drifts (0.1 + 0.2 = 0.30000000000000004).
