@@ -31,15 +31,18 @@ export const TransactionsPage = () => {
     clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(() => {
       const term = value.trim()
-      // Typing only a space (or reverting to the same text) must not bounce the user back to page 1
-      setSearchParams((prev) => (parseListParams(prev).q === term ? prev : new URLSearchParams(buildListSearch({ q: term, page: 1 }))), {
-        replace: true,
-      })
+      // Read the URL as it is now: `searchParams` from this render is up to 300 ms old, and writing it back would
+      // undo a page click made while the timer was pending.
+      // Typing only a space (or reverting to the same text) must not bounce the user back to page 1.
+      const currentQ = parseListParams(new URLSearchParams(window.location.search)).q
+      if (currentQ !== term) setSearchParams(buildListSearch({ q: term, page: 1 }), { replace: true })
     }, SEARCH_DEBOUNCE_MS)
   }
 
-  // The URL changed on its own: show its search text in the input, and drop any pending write from earlier typing
-  // so it can't overwrite where the user just navigated. The trim comparison keeps a trailing space the user typed.
+  // The search text in the URL changed on its own (Back to another search, a pasted link): show it in the input and
+  // drop the pending write, which belonged to the old text. A change to the page alone does not run this: the typed
+  // text stays in the input and its pending write still applies, so the box and the URL end up agreeing.
+  // The trim comparison keeps a trailing space the user typed.
   useEffect(() => {
     clearTimeout(searchTimer.current)
     setInput((current) => (current.trim() === q ? current : q))
