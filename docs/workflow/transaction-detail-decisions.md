@@ -3,7 +3,7 @@ Date: 2026-11-19 · [Spec](transaction-detail-spec.md) · [Plan](transaction-det
 
 Branch: worktree-task4-detail-page
 Type: Feature
-Phase: Review
+Phase: Ship
 
 ## Detours and switches
 - 2026-11-19: type chosen as Feature (new page and navigation, not a fix or refactor), confirmed with the user. Phase moved Understand → Plan after the user's OK.
@@ -95,6 +95,9 @@ No criterion unmet in behavior; it ran `npm test`, lint and the web build (all p
 7. Any 404 reads as "not found": skipped, minor; the new body check does not change this.
 8. Dead `!transaction` guard and key-only span: skipped, cosmetic.
 9. Route path written in two places: skipped, two places only.
+
+### Second `/code-review` run (after the fix, 2026-11-19)
+10 findings: the 8 above again, plus 2 new ones about the new check, both skipped by the user's decision: (a) the body's `id` is not compared with the requested id (`transaction-service.ts:23`; hypothetical, one-token fix `body.id !== id`); (b) the real cause of the `/summary` collision is in the API (two routes share one namespace, `apps/api/src/index.ts:25` vs `:35`), so the web check is a safety net, not the root fix.
 
 ## Map
 - Deferred: the repo has code and no `docs/workflow/map.md`. The user chose to defer `/map` (2026-11-19) as not needed for tonight's change. Until it runs, the map is missing, so "Where" in the spec came from reading the code directly.
