@@ -3,7 +3,7 @@ Date: 2026-11-19
 
 Branch: claude/fix-total-processed-67c9b0
 Type: Bug fix
-Phase: Verify
+Phase: Review
 
 ## Detours and switches
 - none
@@ -46,3 +46,4 @@ Commands run from the worktree root; exit codes read directly.
 - `npm run dev` on the standard ports 3000/4000: blocked by the main checkout's running dev server, so the exact command was not exercised here; API and web were started on 4100 and 3001 instead.
 - The web page was not pointed at this branch's API (its proxy is fixed to port 4000), so the browser check covers the web-side `computeTotal` only; the API figure is covered by the `curl` above and the API test.
 - Spec criteria 11 (`NOTES.md`) and the `/setup` rerun belong to later steps and were not done here.
+- 2026-11-19: Verify passed; `/simplify` shortened two comments; `/setup` filled both hooks and CLAUDE.md. Moved to Review.
