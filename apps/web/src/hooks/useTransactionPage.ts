@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react"
 
 import type { TransactionPage } from "../models/transaction"
 import { fetchTransactions } from "../services/transaction-service"
+import { resultMatches } from "../utils/result-matches"
+import type { LoadedResult } from "../utils/result-matches"
 
 interface UseTransactionPageParams {
   q: string
@@ -9,9 +11,8 @@ interface UseTransactionPageParams {
   pageSize: number
 }
 
-interface Loaded {
-  q: string
-  page: TransactionPage
+interface Loaded extends LoadedResult {
+  result: TransactionPage
 }
 
 interface Settled {
@@ -35,8 +36,7 @@ export const useTransactionPage = ({ q, page, pageSize }: UseTransactionPagePara
   const error = isSettled ? settled.error : null
 
   // False when `data` belongs to an earlier search or page, e.g. after the newest request failed
-  const dataMatches =
-    loaded !== null && loaded.q === q && loaded.page.page === page && loaded.page.pageSize === pageSize
+  const dataMatches = resultMatches(loaded, q, page, pageSize)
 
   useEffect(() => {
     // Changing q or page runs the cleanup below first, which aborts the previous request, so a slow old
@@ -46,7 +46,7 @@ export const useTransactionPage = ({ q, page, pageSize }: UseTransactionPagePara
     fetchTransactions({ q, page, pageSize, signal: controller.signal })
       .then((result) => {
         if (controller.signal.aborted) return
-        setLoaded({ q, page: result })
+        setLoaded({ q, result })
         setSettled({ key, error: null })
       })
       .catch((err: Error) => {
@@ -59,5 +59,5 @@ export const useTransactionPage = ({ q, page, pageSize }: UseTransactionPagePara
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
-  return { data: loaded?.page ?? null, dataMatches, loading, error, retry }
+  return { data: loaded?.result ?? null, dataMatches, loading, error, retry }
 }
