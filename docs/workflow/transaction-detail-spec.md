@@ -66,4 +66,4 @@ Searched `apps/web/src` and `apps/api/src` for `onSelect`, `TransactionModal`, `
 - Editing, refunding or deleting a transaction from the page.
 - Adding `VOIDED` to the status enums or cleaning the data row (same call as the Task 2 spec).
 - Component tests and browser-automation tests: no testing-library, jsdom or Playwright setup in this repo, and adding it is not tonight's work. Listed in `NOTES.md` under "more time".
-- Optimizing the list's rendering (memoizing rows, stable keys): Task 1's area, and it would conflict with that session's edits.
+- Optimizing the list's rendering (memoizing rows): Task 1's area, and it would conflict with that session's edits. Amended 2026-11-19 after the reviewer subagent's finding: the row's `key` was changed from `key={i}` to `key={t.id}` anyway, because that same line was being rewritten into a `Link`; the user chose to keep it. Nothing else about list rendering changed.

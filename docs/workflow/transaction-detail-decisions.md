@@ -15,7 +15,7 @@ Phase: Review
 | Where the page gets its data | Fetch by id from `GET /api/transactions/:id` | Read from the list's state | A direct link or reload must work, and the endpoint already exists |
 | Testing scope for one evening | Unit-test the service function; check page states by hand in the browser | Add testing-library + jsdom and component-test the page | No DOM test tooling in `apps/web/package.json`; adding it is not tonight's work. Gap recorded in `NOTES.md` |
 | How the page tells not-found from failure (proposed in the plan; confirmed when the user approves it) | Service throws `TransactionNotFoundError` on 404, plain `Error` otherwise | return `null` for 404; compare HTTP status numbers in the page | Keeps status codes out of the UI and leaves room for more outcomes; costs one small class |
-| List slowness | Leave to Task 1 (pagination) | Memoize rows / fix `key={i}` here | Task 1 is editing the same files in another session; pagination removes the cause |
+| List slowness | Leave to Task 1 (pagination); the only list-render change is `key={t.id}` on the row line already being rewritten into a `Link` (kept after the reviewer flagged it, user's call 2026-11-19) | Memoize rows; leave `key={i}` | Task 1 is editing the same files in another session and pagination removes the cause; the key change costs nothing extra because that line changes anyway |
 
 ## What changed and why
 - Service: `apps/web/src/services/transaction-service.ts` and its new test: `fetchTransactionById`, `TransactionNotFoundError`; checks `rsp.ok`, encodes the id.
@@ -23,7 +23,8 @@ Phase: Review
 - Page: new `hooks/useTransaction.ts` and `pages/TransactionDetailPage.tsx`; route added in `App.tsx`; CSS in `App.css`.
 
 ## Departures from the plan
-- Task 3 also edited `apps/web/src/App.css` (outside its listed files) for the detail page's width and heading margin; no other file was needed.
+- The row `key` changed from `key={i}` to `key={t.id}`; the spec had listed stable keys as out of scope. Kept on the user's decision after the reviewer flagged it (spec and NOTES.md corrected).
+- Plan task 3 (hook and page; not the spec's Task 3, the form) also edited `apps/web/src/App.css` (outside its listed files) for the detail page's width and heading margin; no other file was needed.
 - Tasks 1 and 2 ran in order, not in parallel, as the plan allowed.
 - `npm install` changed `package-lock.json`; I reverted it so it isn't in any commit.
 
@@ -73,6 +74,13 @@ Depth chosen: riskiest few.
 3. Errors were swallowed silently (`useTransaction.ts:25-26`). **Fixed** with a `console.error` for non-not-found failures.
 4. Row link text is the whole row for screen readers (`TransactionList.tsx:27`). Noted for Task 5.
 5. No page title on the detail page. Skipped.
+
+## Reviewer subagent (against the spec, 2026-11-19)
+No criterion unmet in behavior; it ran `npm test`, lint and the web build (all pass) but not a browser. Automated coverage: criteria 9, 10, 11. Half covered (service throws tested, page mapping not): 3 and 4. Browser-only: 1, 2, 5, 6, 7, 8.
+- Row `key` changed against the spec's out-of-scope list: user kept it; spec, decisions and `NOTES.md` corrected.
+- Page-level tests absent although some criteria say "test of the page": decided earlier (no DOM test tooling); the gap is now stated precisely in `NOTES.md`.
+- A → B → back to A before B loads can briefly show A's old result or error (`useTransaction.ts:42`); traced in code, not run; noted in `NOTES.md`, not fixed.
+- "Task 3" wording in the departures section clarified (plan task, not the form).
 
 ## Map
 - Deferred: the repo has code and no `docs/workflow/map.md`. The user chose to defer `/map` (2026-11-19) as not needed for tonight's change. Until it runs, the map is missing, so "Where" in the spec came from reading the code directly.
