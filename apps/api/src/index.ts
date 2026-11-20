@@ -4,6 +4,7 @@ import cors from "cors"
 
 import { PORT } from "./config.js"
 import { createTransactionService } from "./services/transaction-service.js"
+import { parseListQuery } from "./utils/list-query.js"
 
 const app = express()
 
@@ -17,9 +18,11 @@ app.get("/api/health", (_req: Request, res: Response) => {
 })
 
 app.get("/api/transactions", (req: Request, res: Response) => {
-  console.log("GET /api/transactions", req.query)
-  const transactions = transactionService.getAll()
-  res.json({ transactions })
+  const parsed = parseListQuery(req.query)
+  if (!parsed.ok) {
+    return res.status(400).json({ error: parsed.error })
+  }
+  res.json(transactionService.list(parsed.params))
 })
 
 app.get("/api/transactions/summary", (_req: Request, res: Response) => {
