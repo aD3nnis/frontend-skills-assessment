@@ -4,6 +4,7 @@ import cors from "cors"
 
 import { PORT } from "./config.js"
 import { createTransactionService } from "./services/transaction-service.js"
+import { validateNewTransaction } from "./utils/validation.js"
 
 const app = express()
 
@@ -27,8 +28,11 @@ app.get("/api/transactions/summary", (_req: Request, res: Response) => {
 })
 
 app.post("/api/transactions", (req: Request, res: Response) => {
-  const { merchantName, cardBrand, amount } = req.body
-  const transaction = transactionService.create({ merchantName, cardBrand, amount })
+  const result = validateNewTransaction(req.body)
+  if (!result.ok) {
+    return res.status(400).json({ error: "Invalid transaction", fields: result.errors })
+  }
+  const transaction = transactionService.create(result.value)
   res.status(201).json(transaction)
 })
 
