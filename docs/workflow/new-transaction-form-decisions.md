@@ -100,9 +100,9 @@ Checked the diff against this file and Task 3. All criteria met except "whole fl
 - Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
 
 ## Not verified
-- The form has not been driven in a browser by Claude; the user was given a by-hand checklist (submit empty; `12.999`, `-5`, `abc`, `1e3`, `0` rejected; `12.34` shows as 12.34 in the list, not 12; API stopped shows an error alert and the page stays).
-- The list refresh after `navigate("/")` was not checked.
-- `/code-review` has not run.
+- The user drove the form in a browser on commit `eb32b8d` (2026-11-19): they reported checking the UI and seeing the error alert with the API stopped. They did not list each checklist item, so Claude has no per-item record, and Claude has not driven the form itself.
+- The list refresh after `navigate("/")` is covered only by that general by-hand check.
+- Not run after the last fix round: a fourth `/code-review`.
 
 ## With more time
 - New transactions still get `surchargeRate: 0` and status `APPROVED`, so the summary's `totalSurcharge` ignores them; the seed data's rates (2.5, 3, 3.5%) are not tied to card brand, so no rule was invented.
