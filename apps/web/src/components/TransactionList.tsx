@@ -1,8 +1,9 @@
 import { Tag } from "antd"
-import { Link, useLocation } from "react-router-dom"
+import { Link } from "react-router-dom"
 
 import type { Transaction } from "../models/transaction"
 import { formatCurrency, formatDate } from "../utils/format"
+import { LIST_LINK_STATE } from "../utils/list-state"
 import { statusTagColor } from "../utils/status"
 
 interface TransactionListProps {
@@ -10,9 +11,6 @@ interface TransactionListProps {
 }
 
 export const TransactionList = ({ transactions }: TransactionListProps) => {
-  // The detail page's back button uses this to return to the same search and page
-  const { search } = useLocation()
-
   return (
     <div className="transaction-list">
       <div className="transaction-row transaction-header">
@@ -31,7 +29,7 @@ export const TransactionList = ({ transactions }: TransactionListProps) => {
           className="transaction-row"
           key={t.id}
           to={`/transactions/${encodeURIComponent(t.id)}`}
-          state={{ listSearch: search }}
+          state={LIST_LINK_STATE}
         >
           <span className="mono">{t.id}</span>
           <span>{t.merchantName}</span>

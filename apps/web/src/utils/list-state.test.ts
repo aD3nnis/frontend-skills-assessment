@@ -1,21 +1,22 @@
 import { describe, expect, it } from "vitest"
 
-import { listSearchFromState } from "./list-state"
+import { LIST_LINK_STATE, cameFromList } from "./list-state"
 
-describe("listSearchFromState", () => {
-  it("returns the list's query string when the row link carried one", () => {
-    expect(listSearchFromState({ listSearch: "?q=declined&page=2" })).toBe("?q=declined&page=2")
+describe("cameFromList", () => {
+  it("is true for the state the list's row links carry", () => {
+    expect(cameFromList(LIST_LINK_STATE)).toBe(true)
   })
 
-  it("returns an empty string for a direct visit, where there is no router state", () => {
-    expect(listSearchFromState(null)).toBe("")
-    expect(listSearchFromState(undefined)).toBe("")
+  it("is false for a direct visit or a new tab, where there is no router state", () => {
+    expect(cameFromList(null)).toBe(false)
+    expect(cameFromList(undefined)).toBe(false)
   })
 
   it("ignores state it didn't write (wrong shape or wrong type)", () => {
-    expect(listSearchFromState("?q=x")).toBe("")
-    expect(listSearchFromState({})).toBe("")
-    expect(listSearchFromState({ listSearch: 5 })).toBe("")
-    expect(listSearchFromState({ listSearch: null })).toBe("")
+    expect(cameFromList("fromList")).toBe(false)
+    expect(cameFromList({})).toBe(false)
+    expect(cameFromList({ fromList: false })).toBe(false)
+    expect(cameFromList({ fromList: "yes" })).toBe(false)
+    expect(cameFromList({ listSearch: "?q=x" })).toBe(false)
   })
 })

@@ -4,7 +4,7 @@ import { Button, Descriptions, Result, Spin, Tag } from "antd"
 import { useTransaction } from "../hooks/useTransaction"
 import { TransactionNotFoundError } from "../services/transaction-service"
 import { formatCurrency, formatDate } from "../utils/format"
-import { listSearchFromState } from "../utils/list-state"
+import { cameFromList } from "../utils/list-state"
 import { statusTagColor } from "../utils/status"
 
 export const TransactionDetailPage = () => {
@@ -13,8 +13,10 @@ export const TransactionDetailPage = () => {
 
   const navigate = useNavigate()
   const location = useLocation()
-  // Back to the same search and page the row was opened from; a direct visit goes to the plain list
-  const goBack = () => navigate({ pathname: "/", search: listSearchFromState(location.state) })
+  // Opened from the list: step back in history, so the list returns with its own search and page and the browser's
+  // Back button doesn't land on this page again (a pushed entry would make the two controls loop).
+  // Otherwise (pasted link, new tab) there is no list entry to return to: replace this one with the plain list.
+  const goBack = () => (cameFromList(location.state) ? navigate(-1) : navigate("/", { replace: true }))
 
   if (loading) {
     return (
