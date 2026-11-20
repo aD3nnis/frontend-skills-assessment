@@ -50,7 +50,7 @@ Time-boxed to one evening (decided with the user). The web app has vitest but no
 9. An id with unusual characters (spaces, `/`, `%`) is encoded when building the request URL and ends in the not-found state, not a crash. · Check: unit test of the service function with such an id; browser check.
 10. The web service checks `rsp.ok` for the new fetch-by-id call and does not treat an error body as a transaction. Existing `fetchTransactions` and `createTransaction` behavior is unchanged (Task 3 owns the form). · Check: unit test; `git diff` shows no edits to those two functions.
 11. `npm test`, `npm run lint` and `npm run build` pass, and the new tests are in files next to the code they test. · Check: run each command and read the exit codes.
-12. `NOTES.md` has a Task 4 section: what was built, the states handled, the modal decision, and anything left. · Check: read the file.
+12. `NOTES.md` has a Task 4 section: what was built, the states handled, the modal decision, and anything left. · Check: read the file. **Amended 2026-11-19: moved out of this branch.** The user will write the notes in a separate PR; `NOTES.md` is unchanged here. The draft text is in this branch's history (`git show 8bab2f0:NOTES.md`).
 
 ## Blast radius
 Searched `apps/web/src` and `apps/api/src` for `onSelect`, `TransactionModal`, `getById` and `transactions/:id`:

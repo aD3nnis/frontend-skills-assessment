@@ -17,6 +17,8 @@ Phase: Review
 | How the page tells not-found from failure (proposed in the plan; confirmed when the user approves it) | Service throws `TransactionNotFoundError` on 404, plain `Error` otherwise | return `null` for 404; compare HTTP status numbers in the page | Keeps status codes out of the UI and leaves room for more outcomes; costs one small class |
 | List slowness | Leave to Task 1 (pagination); the only list-render change is `key={t.id}` on the row line already being rewritten into a `Link` (kept after the reviewer flagged it, user's call 2026-11-19) | Memoize rows; leave `key={i}` | Task 1 is editing the same files in another session and pagination removes the cause; the key change costs nothing extra because that line changes anyway |
 
+- 2026-11-19: after the code review the user asked to take the `NOTES.md` changes out of this branch; they will write the notes in a separate PR. `NOTES.md` is restored to `main`'s version, so every "noted in `NOTES.md`" below means "to go in that separate notes PR". The draft text is in history: `git show 8bab2f0:NOTES.md`.
+
 ## What changed and why
 - Service: `apps/web/src/services/transaction-service.ts` and its new test: `fetchTransactionById`, `TransactionNotFoundError`; checks `rsp.ok`, encodes the id.
 - List: `TransactionList.tsx` rows are `Link`s (keyboard works, `key={t.id}`); `onSelect` removed. `TransactionsPage.tsx` lost the `selected` state and the modal; `TransactionModal.tsx` deleted.
@@ -44,7 +46,7 @@ Run in this worktree on 2026-11-19 with the API on port 4100 and the web on 3100
 | 9. Odd ids | `/transactions/a%2Fb` shows not-found for `a/b`; service test asserts the encoded URL |
 | 10. `rsp.ok` checked | service tests (404 and 500 behave differently); older functions unchanged |
 | 11. Checks | `npm test` (API 7, web 9 pass), `npm run lint` (0 problems), web and API builds pass |
-| 12. Notes | `NOTES.md` has a Task 4 section |
+| 12. Notes | Moved out of this branch by the user's decision (separate notes PR); `NOTES.md` unchanged here |
 
 `/transactions/new` still shows the form (regression check for the route order).
 
@@ -81,6 +83,18 @@ No criterion unmet in behavior; it ran `npm test`, lint and the web build (all p
 - Page-level tests absent although some criteria say "test of the page": decided earlier (no DOM test tooling); the gap is now stated precisely in `NOTES.md`.
 - A → B → back to A before B loads can briefly show A's old result or error (`useTransaction.ts:42`); traced in code, not run; noted in `NOTES.md`, not fixed.
 - "Task 3" wording in the departures section clarified (plan task, not the form).
+
+## Code review (`/code-review`, 2026-11-19)
+9 findings. What was done about each:
+1. **Fixed.** `/transactions/summary` crashed the page: the API's `/summary` route answers for the id "summary" with 200 and the totals, which the service returned as a transaction (`transaction-service.ts:20`), so `formatCurrency(undefined)` threw. The service now treats a 200 body without a string `id` as not found. Two tests written first and seen failing (body is the totals object; body is `null`), now passing.
+2. Going back loses the search, scroll position and refetches everything: not fixed here, Task 1's area (search in the URL); for the notes PR.
+3. 10,000 `Link` rows may be heavier than plain rows: skipped, unmeasured; Task 1's pagination cuts the row count.
+4. No automated tests for the page states or the stale guard: skipped; no DOM test tooling (decided earlier).
+5. Returning to an earlier id briefly shows its old result: skipped, minor, traced in code only.
+6. Focus outline may be clipped by `overflow: hidden` on the list (`App.css:94`): skipped, not checked visually.
+7. Any 404 reads as "not found": skipped, minor; the new body check does not change this.
+8. Dead `!transaction` guard and key-only span: skipped, cosmetic.
+9. Route path written in two places: skipped, two places only.
 
 ## Map
 - Deferred: the repo has code and no `docs/workflow/map.md`. The user chose to defer `/map` (2026-11-19) as not needed for tonight's change. Until it runs, the map is missing, so "Where" in the spec came from reading the code directly.
