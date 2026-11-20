@@ -17,8 +17,8 @@ export interface NewTransactionInput {
 }
 
 // Allowlist on purpose: only APPROVED counts, so DECLINED, PENDING, REFUNDED, the data's unknown
-// VOIDED and any future status stay out. The web mirrors this in apps/web/src/utils/format.ts
-// (computeTotal); change both.
+// VOIDED and any future status stay out. This is the only copy of the rule: the web shows the total
+// the API computes (totalProcessed in listTransactions).
 export const isProcessed = (t: { status: string }): boolean => t.status === TransactionStatus.APPROVED
 
 // Adds in integer cents because float addition drifts (0.1 + 0.2 = 0.30000000000000004).
