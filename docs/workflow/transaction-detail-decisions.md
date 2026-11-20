@@ -3,7 +3,7 @@ Date: 2026-11-19 · [Spec](transaction-detail-spec.md) · [Plan](transaction-det
 
 Branch: worktree-task4-detail-page
 Type: Feature
-Phase: Change
+Phase: Review
 
 ## Detours and switches
 - 2026-11-19: type chosen as Feature (new page and navigation, not a fix or refactor), confirmed with the user. Phase moved Understand → Plan after the user's OK.
@@ -49,4 +49,6 @@ Run in this worktree on 2026-11-19 with the API on port 4100 and the web on 3100
 
 ## Not verified
 - The opening lag has not been measured by Claude, only reasoned from the code.
+- Row-link cost: each of the 10,000 list rows is now a react-router `Link` (per-row router hooks), which `/simplify`'s efficiency review flagged as possibly heavier than the old plain rows. Not measured. Left as is (2026-11-19, user's call) because Task 1's pagination cuts the row count; alternative if it still matters: plain `<a href>` rows with one delegated click handler.
+- `/simplify` ran (4 reviewers) and changed no code; its optional suggestions were skipped (merge the two `Result` blocks, key the page by id to simplify the hook, abort the request, a `transactionPath` helper).
 - The user reports (2026-11-19) that Task 1's branch fixes the loading problem; they tested it there. Claude has not read or run that branch, so this is the user's word, not checked here.
