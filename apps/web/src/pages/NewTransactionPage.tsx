@@ -74,6 +74,8 @@ export const NewTransactionPage = () => {
           rules={[
             { required: true, whitespace: true, message: "Merchant name is required" },
             {
+              // The API trims before checking length, so measure the trimmed value here too
+              transform: (value: string | undefined) => value?.trim(),
               max: MAX_MERCHANT_NAME_LENGTH,
               message: `Merchant name must be at most ${MAX_MERCHANT_NAME_LENGTH} characters`,
             },
