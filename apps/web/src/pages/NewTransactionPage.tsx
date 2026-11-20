@@ -81,8 +81,9 @@ export const NewTransactionPage = () => {
             },
           ]}
         >
-          {/* +1 so an over-long paste still triggers the rule above instead of being silently cut */}
-          <Input placeholder="Merchant name" maxLength={MAX_MERCHANT_NAME_LENGTH + 1} />
+          {/* No maxLength: the rule above measures the trimmed value, so a cap on the raw text could cut real
+              characters (a paste with leading spaces) without any error. An over-long name shows the error instead. */}
+          <Input placeholder="Merchant name" />
         </Form.Item>
 
         <Form.Item label="Card brand" name="cardBrand">
