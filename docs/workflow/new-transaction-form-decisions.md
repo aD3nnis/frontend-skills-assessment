@@ -3,7 +3,7 @@ Date: 2026-11-19
 
 Branch: feat/new-transaction-form
 Type: Feature
-Phase: Review
+Phase: Close
 
 ## Detours and switches
 - 2026-11-19: Claude made the code changes without suggesting a workflow first: no type, branch, spec or plan. The user stopped this and asked to go through the workflow so they could understand the code better. They chose a short retroactive route: branch and this file first, then commit, then their own review with `/walkthrough`. No `/spec` or `/plan`; "done" is Task 3 in `INSTRUCTIONS.md` (validation, feedback, consistency with the app, correct money handling, and a better `POST /api/transactions`).
