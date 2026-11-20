@@ -35,6 +35,16 @@ describe("fetchTransactionById", () => {
     await expect(fetchTransactionById("nope")).rejects.toBeInstanceOf(TransactionNotFoundError)
   })
 
+  it("treats a 200 body that is not a transaction as not found (the API's /summary route answers for the id \"summary\")", async () => {
+    vi.stubGlobal("fetch", respond(200, { count: 10000, totalVolume: 6488615.4, totalSurcharge: 763737.79 }))
+    await expect(fetchTransactionById("summary")).rejects.toBeInstanceOf(TransactionNotFoundError)
+  })
+
+  it("treats a 200 with a null body as not found", async () => {
+    vi.stubGlobal("fetch", respond(200, null))
+    await expect(fetchTransactionById("x")).rejects.toBeInstanceOf(TransactionNotFoundError)
+  })
+
   it("throws a plain Error, not TransactionNotFoundError, on a 500", async () => {
     vi.stubGlobal("fetch", respond(500, { error: "boom" }))
     const failure = await fetchTransactionById("txn_000001").catch((e: unknown) => e)

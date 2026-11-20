@@ -17,7 +17,11 @@ export const fetchTransactionById = async (id: string): Promise<Transaction> => 
   const rsp = await fetch(`${API_BASE}/transactions/${encodeURIComponent(id)}`)
   if (rsp.status === 404) throw new TransactionNotFoundError(`Transaction ${id} not found`)
   if (!rsp.ok) throw new Error(`Failed to load transaction (HTTP ${rsp.status})`)
-  return rsp.json()
+  const body = await rsp.json()
+  // GET /api/transactions/summary is registered before /:id, so the id "summary" gets 200 with the totals
+  // object instead of a 404. Anything without a string `id` is not a transaction, so treat it as not found.
+  if (typeof body?.id !== "string") throw new TransactionNotFoundError(`Transaction ${id} not found`)
+  return body
 }
 
 export interface NewTransactionInput {
