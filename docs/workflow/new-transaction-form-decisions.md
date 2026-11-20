@@ -3,7 +3,7 @@ Date: 2026-11-19
 
 Branch: feat/new-transaction-form
 Type: Feature
-Phase: Verify
+Phase: Review
 
 ## Detours and switches
 - 2026-11-19: Claude made the code changes without suggesting a workflow first: no type, branch, spec or plan. The user stopped this and asked to go through the workflow so they could understand the code better. They chose a short retroactive route: branch and this file first, then commit, then their own review with `/walkthrough`. No `/spec` or `/plan`; "done" is Task 3 in `INSTRUCTIONS.md` (validation, feedback, consistency with the app, correct money handling, and a better `POST /api/transactions`).
@@ -40,11 +40,40 @@ Run from the repo root on 2026-11-19, before commit:
   - body `{"merchantName":"","cardBrand":"X","amount":"5"}` returned 400 with errors for all three fields.
   - body `{"merchantName":"Acme","cardBrand":"VISA","amount":12.5}` returned 201 with `amount` 12.5 and `total` 12.5.
 
+- 2026-11-19: `/simplify` (4 reviewers) applied two fixes: `MAX_MERCHANT_NAME_LENGTH` constant in `money.ts`, and `setSubmitting(false)` moved to `finally`. After it: API 18 and web 21 tests pass, lint 0 errors, web typecheck clean. Skipped on purpose: a shared package for the duplicated rules, validation middleware (one route), the double-submit guard, client-side `trim()`, the unused `ApiError.status`.
+- Curl with the API stopped, through the Vite proxy: `POST /api/transactions` returned `500 Internal Server Error`, `Content-Type: text/plain`. `fetch` resolves, `!rsp.ok` is true, `.json()` fails, and the page shows "Could not create the transaction" (`transaction-service.ts:35-38`, `NewTransactionPage.tsx:44`).
+
+### Break-it checks (walkthrough, 2026-11-19)
+Each line was broken, the test file run, and the line restored with `git checkout`; `git status` afterwards showed no changes to tracked files.
+| Criterion | Line broken | Test that failed |
+|---|---|---|
+| Whole cents only (API) | `validation.ts:39`, `> 1e-6` to `> Infinity` | `rejects an amount that is 3 decimal places` |
+| Known card brand (API) | `validation.ts:26`, condition to `false` | `rejects blank merchant names and unknown card brands`, `rejects a non-object body with an error per field` |
+| Merchant name required (API) | `validation.ts:19`, `if (!merchantName)` to `if (false)` | the same two tests |
+| Amount above 0 (API) | `validation.ts:41`, `cents <= 0` to `cents < 0` | `rejects an amount that is zero` |
+| Amount cap (API) | `validation.ts:43`, `amount > MAX_AMOUNT` to `false` | `rejects an amount that is above the cap` |
+| Amounts must be numbers (API) | `validation.ts:35`, `typeof amount !== "number" \|\|` removed | none failed, no test added: `Number.isFinite("12")` is already false for a string, so the `typeof` is redundant at runtime and kept only to narrow `unknown` for TypeScript |
+| `parseAmount` does not truncate (web) | `money.ts:22`, `Number(...)` to `parseInt(...)` | `parses decimals instead of truncating like parseInt did` |
+| Two decimals max (web) | `money.ts:8`, `\d{1,2}` to `\d+` | `rejects "12.345"` |
+| Above 0 (web) | `money.ts:15`, `<= 0` to `< 0` | `rejects "0"`, `rejects "0.00"` |
+
+## Reviewed by hand
+- The user asked Claude to answer the walkthrough questions, so nothing below is the user's own finding. Claude answered: why `0.1 + 0.2` is accepted and `1.005` rejected (`validation.ts:38-39`, tolerance check, not `Math.round` alone); what happens in the form when the API is down (`NewTransactionPage.tsx:24-49`, `transaction-service.ts:35-38`); why the `.catch` on `rsp.json()` stays (`transaction-service.ts:37`).
+- The user's one partial answer (amount accepted "because it is two decimal places and Math.round takes care of it") was corrected: `Math.round` alone would have accepted `1.005`; the tolerance check rejects it.
+- Read by Claude only: `apps/api/src/utils/validation.ts`, `apps/web/src/pages/NewTransactionPage.tsx`, `apps/web/src/services/transaction-service.ts`, `apps/web/src/utils/money.ts`, `apps/api/src/index.ts`, `apps/web/src/App.css`, and both test files.
+
+## Second opinion (Claude, walkthrough)
+- The form page has no automated tests (`ApiError` mapping, failure paths); it needs jsdom and testing-library, which are not installed.
+- Not confirmed that the list shows the new row after `navigate("/")`; Task 1 may change how the list loads.
+- `apps/api/src/index.ts:44-47` still returns the stack trace in a 500, including for malformed JSON.
+
+## Map
+- Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
+
 ## Not verified
-- The form has not been driven in a browser by Claude. By-hand checks for the user: submit empty (inline errors); `12.999`, `-5`, `abc`, `1e3`, `0` are rejected; `12.34` shows as 12.34 in the list, not 12; with the API stopped, an error alert shows and the page stays.
-- No break-it checks (each test shown failing against broken code) have been done yet.
-- The created transaction's list refresh after `navigate("/")` was not checked.
-- `/walkthrough`, the `reviewer` subagent and `/code-review` have not run.
+- The form has not been driven in a browser by Claude; the user was given a by-hand checklist (submit empty; `12.999`, `-5`, `abc`, `1e3`, `0` rejected; `12.34` shows as 12.34 in the list, not 12; API stopped shows an error alert and the page stays).
+- The list refresh after `navigate("/")` was not checked.
+- The `reviewer` subagent and `/code-review` have not run.
 
 ## With more time
 - New transactions still get `surchargeRate: 0` and status `APPROVED`; the seed data's rates (2.5, 3, 3.5%) are not tied to card brand, so no rule was invented.
