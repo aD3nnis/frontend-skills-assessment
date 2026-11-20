@@ -32,14 +32,9 @@ export const NewTransactionPage = () => {
     inFlight.current = true
     setSubmitting(true)
     setError(null)
+    const amount = parseAmount(values.amount)
     try {
-      const created = await createTransaction({
-        merchantName: values.merchantName.trim(),
-        cardBrand: values.cardBrand,
-        amount: parseAmount(values.amount),
-      })
-      message.success(`Created transaction for ${formatCurrency(created.amount)}`)
-      navigate("/")
+      await createTransaction({ merchantName: values.merchantName.trim(), cardBrand: values.cardBrand, amount })
     } catch (err) {
       const { known, unknown } =
         err instanceof ApiError ? splitFieldErrors(err.fields, FORM_FIELDS) : { known: [], unknown: [] }
@@ -48,10 +43,15 @@ export const NewTransactionPage = () => {
       // Anything the form cannot attach to an input, or no field errors at all, goes in the alert.
       if (unknown.length > 0) setError(unknown.join(". "))
       else if (known.length === 0) setError(err instanceof Error ? err.message : "Something went wrong")
+      return
     } finally {
       inFlight.current = false
       setSubmitting(false)
     }
+    // From here the payment exists, so nothing below may be reported as a failed create (the user
+    // would retry into a duplicate). The toast uses the amount we sent, not the response body.
+    message.success(`Created transaction for ${formatCurrency(amount)}`)
+    navigate("/")
   }
 
   return (

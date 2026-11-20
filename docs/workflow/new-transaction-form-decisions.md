@@ -90,6 +90,12 @@ Checked the diff against this file and Task 3. All criteria met except "whole fl
 - Skipped: `index.ts` wiring (`app.use(errorHandler)`, the 400 guard) is still untested because the file listens on import; the `inFlight` double-submit ref still has no test (no jsdom). Both fit under With more time.
 - After the fixes: API 22 and web 34 tests pass, lint 0 errors, both typechecks clean. A third `/code-review` was not run.
 
+### Third `/code-review medium main` (2026-11-19)
+5 findings, none blocking. One fixed, four skipped:
+- Fixed: errors after the POST succeeded were reported as a failed create (toast, `formatCurrency(created.amount)`, `navigate` were inside the same `try`, and an unreadable 2xx body made `createTransaction` reject), which would invite a duplicate payment. `createTransaction` now resolves `null` for a 2xx with no usable body (test written first, failed with "Unexpected end of JSON input", passes now); the page runs the toast and `navigate` after the `try`, and the toast uses the amount we sent. The page change has no test (no jsdom).
+- Skipped: real 500s now show "Internal server error" in the alert while the dev proxy's 500 shows "Could not create the transaction" (inconsistent copy); `pickFieldMessages` return type claims known keys; the `index.ts` wiring and the `inFlight` guard are still untested (see above).
+- After the fix: API 22 and web 35 tests pass, lint 0 errors, both typechecks clean. A fourth `/code-review` was not run.
+
 ## Map
 - Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
 

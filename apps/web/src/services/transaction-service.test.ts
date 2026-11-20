@@ -79,6 +79,11 @@ describe("createTransaction error body shape", () => {
 })
 
 describe("createTransaction success", () => {
+  it("still resolves when a 2xx response has no usable body, because the payment was created", async () => {
+    respondWith("", 201)
+    await expect(createTransaction(input)).resolves.toBeNull()
+  })
+
   it("returns the created transaction", async () => {
     respondWith(JSON.stringify({ id: "txn_010001", amount: 12.5 }), 201)
     await expect(createTransaction(input)).resolves.toMatchObject({ id: "txn_010001" })

@@ -31,7 +31,7 @@ const pickFieldMessages = (fields: unknown): ApiError["fields"] => {
   return Object.fromEntries(Object.entries(fields).filter(([, message]) => typeof message === "string"))
 }
 
-export const createTransaction = async (input: NewTransactionInput): Promise<Transaction> => {
+export const createTransaction = async (input: NewTransactionInput): Promise<Transaction | null> => {
   const rsp = await fetch(`${API_BASE}/transactions`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -45,5 +45,7 @@ export const createTransaction = async (input: NewTransactionInput): Promise<Tra
     const message = typeof body?.error === "string" ? body.error : "Could not create the transaction"
     throw new ApiError(rsp.status, message, pickFieldMessages(body?.fields))
   }
-  return rsp.json()
+  // A 2xx means the payment exists. An unreadable body must not turn that into a rejection, or the
+  // caller reports a failed create and the user retries into a duplicate.
+  return rsp.json().catch(() => null)
 }
