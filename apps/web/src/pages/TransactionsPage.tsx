@@ -94,23 +94,26 @@ export const TransactionsPage = () => {
       )}
 
       {data && (
-        // Keeps showing the previous results (dimmed by the spinner) while the next page loads
+        // Keeps showing the previous results (dimmed by the spinner) while the next page loads. After a failed
+        // request they stay too, but dimmed, so they don't pass for the results of the search typed in the box.
         <Spin spinning={loading}>
-          <SummaryBar total={data.total} totalProcessed={data.totalProcessed} />
+          <div className={error ? "results-stale" : undefined}>
+            <SummaryBar total={data.total} totalProcessed={data.totalProcessed} />
 
-          <TransactionList transactions={data.transactions} onSelect={setSelected} />
+            <TransactionList transactions={data.transactions} onSelect={setSelected} />
 
-          {data.total === 0 && !loading && <p className="empty-state">No transactions match your search.</p>}
+            {data.total === 0 && !loading && <p className="empty-state">No transactions match your search.</p>}
 
-          <div className="pagination-bar">
-            <Pagination
-              current={page}
-              pageSize={PAGE_SIZE}
-              total={data.total}
-              showSizeChanger={false}
-              hideOnSinglePage
-              onChange={(next) => setSearchParams(buildListSearch({ q, page: next }))}
-            />
+            <div className="pagination-bar">
+              <Pagination
+                current={page}
+                pageSize={PAGE_SIZE}
+                total={data.total}
+                showSizeChanger={false}
+                hideOnSinglePage
+                onChange={(next) => setSearchParams(buildListSearch({ q, page: next }))}
+              />
+            </div>
           </div>
         </Spin>
       )}

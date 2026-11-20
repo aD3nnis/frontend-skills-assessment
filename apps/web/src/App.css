@@ -135,3 +135,7 @@ body {
   text-align: center;
   color: var(--muted);
 }
+
+.results-stale {
+  opacity: 0.45;
+}
