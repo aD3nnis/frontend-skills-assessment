@@ -3,7 +3,7 @@ Date: 2026-11-19
 
 Branch: claude/fix-total-processed-67c9b0
 Type: Bug fix
-Phase: Review
+Phase: Ship
 
 ## Detours and switches
 - none
@@ -86,3 +86,4 @@ After fb75468: `npm test` exit 0 (API 7, web 4), `npm run lint` 0 errors, the sa
 - Remove the drift risk between the two copies of the rule: a test that compares them, or have the web read the server summary (see Pending).
 - Put `count` and `totalSurcharge` in `getSummary` on the same basis as `totalVolume`, or document that they cover all statuses.
 - Run `/map` to write the repo map.
+- 2026-11-19: `/code-review medium main` found no bugs (5 low items). Finding 1 (total follows the search filter, `TransactionsPage.tsx:50`) left as is: out of scope for this bug fix and a Task 1 question. Moved to Ship.
