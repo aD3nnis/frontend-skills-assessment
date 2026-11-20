@@ -52,6 +52,18 @@ body {
   margin-top: 0;
 }
 
+.transaction-detail {
+  max-width: 640px;
+}
+
+.transaction-detail h2 {
+  margin-top: 0;
+}
+
+.transaction-detail-actions {
+  margin-top: 16px;
+}
+
 .form-field {
   margin-bottom: 12px;
 }
@@ -95,6 +107,9 @@ body {
   font-size: 14px;
   align-items: center;
   cursor: pointer;
+  /* rows are <a> elements now: keep them looking like plain text */
+  color: inherit;
+  text-decoration: none;
 }
 
 .transaction-row:hover {

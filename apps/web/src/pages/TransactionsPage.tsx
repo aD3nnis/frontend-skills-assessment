@@ -5,9 +5,7 @@ import { SearchOutlined } from "@ant-design/icons"
 
 import { SummaryBar } from "../components/SummaryBar"
 import { TransactionList } from "../components/TransactionList"
-import { TransactionModal } from "../components/TransactionModal"
 import { useTransactionPage } from "../hooks/useTransactionPage"
-import type { Transaction } from "../models/transaction"
 import { buildListSearch, parseListParams } from "../utils/list-params"
 
 const PAGE_SIZE = 25
@@ -18,7 +16,6 @@ export const TransactionsPage = () => {
   // The URL is the source of truth for what is shown; the input below only holds what is being typed
   const { q, page } = parseListParams(searchParams)
   const [input, setInput] = useState(q)
-  const [selected, setSelected] = useState<Transaction | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   // The search text this page itself last wrote to the URL, until the `q` effect below has seen it come back
   const ownWriteQ = useRef<string | undefined>(undefined)
@@ -113,7 +110,7 @@ export const TransactionsPage = () => {
           <div className={error ? "results-stale" : undefined}>
             <SummaryBar total={data.total} totalProcessed={data.totalProcessed} />
 
-            <TransactionList transactions={data.transactions} onSelect={setSelected} />
+            <TransactionList transactions={data.transactions} />
 
             {data.total === 0 && !loading && <p className="empty-state">No transactions match your search.</p>}
 
@@ -130,8 +127,6 @@ export const TransactionsPage = () => {
           </div>
         </Spin>
       )}
-
-      <TransactionModal transaction={selected} onClose={() => setSelected(null)} />
     </>
   )
 }
