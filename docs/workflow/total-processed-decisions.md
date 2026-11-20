@@ -42,9 +42,6 @@ Commands run from the worktree root; exit codes read directly.
 - Spec criterion 9: `git diff --stat main` lists only the two test files, the two source files and the three `docs/workflow/total-processed-*.md` files; nothing else.
 - Screenshot of the unfiltered bar: kept in the session scratchpad, outside the repo.
 
-## What changed and why
-- The write-up for this task is in `NOTES.md` (Task 2 bug section).
-
 ## Not verified
 - `npm run dev` on the standard ports 3000/4000: blocked by the main checkout's running dev server, so the exact command was not exercised here; API and web were started on 4100 and 3001 instead.
 - The web page was not pointed at this branch's API (its proxy is fixed to port 4000), so the browser check covers the web-side `computeTotal` only; the API figure is covered by the `curl` above and the API test.
