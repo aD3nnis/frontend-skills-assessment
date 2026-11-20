@@ -3,7 +3,7 @@ Date: 2026-11-19 · [Spec](transaction-detail-spec.md) · [Plan](transaction-det
 
 Branch: worktree-task4-detail-page
 Type: Feature
-Phase: Ship
+Phase: Close
 
 ## Detours and switches
 - 2026-11-19: type chosen as Feature (new page and navigation, not a fix or refactor), confirmed with the user. Phase moved Understand → Plan after the user's OK.
