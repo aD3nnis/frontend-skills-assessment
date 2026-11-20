@@ -23,3 +23,12 @@ export interface Transaction {
   status: TransactionStatus
   createdAt: string
 }
+
+// Response of GET /api/transactions (the web copy of the API's TransactionPage)
+export interface TransactionPage {
+  transactions: Transaction[]
+  page: number
+  pageSize: number
+  total: number
+  totalProcessed: number
+}

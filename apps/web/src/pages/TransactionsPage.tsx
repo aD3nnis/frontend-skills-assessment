@@ -1,37 +1,74 @@
-import { useState } from "react"
-import { Input, Spin } from "antd"
+import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
+import { Alert, Button, Input, Pagination, Spin } from "antd"
 import { SearchOutlined } from "@ant-design/icons"
 
 import { SummaryBar } from "../components/SummaryBar"
 import { TransactionList } from "../components/TransactionList"
 import { TransactionModal } from "../components/TransactionModal"
-import { useTransactions } from "../hooks/useTransactions"
+import { useTransactionPage } from "../hooks/useTransactionPage"
 import type { Transaction } from "../models/transaction"
+import { buildListSearch, parseListParams } from "../utils/list-params"
+
+const PAGE_SIZE = 25
+const SEARCH_DEBOUNCE_MS = 300
 
 export const TransactionsPage = () => {
-  const { transactions, loading } = useTransactions()
-  const [search, setSearch] = useState("")
+  const [searchParams, setSearchParams] = useSearchParams()
+  // The URL is the source of truth for what is shown; the input below only holds what is being typed
+  const { q, page } = parseListParams(searchParams)
+  const [input, setInput] = useState(q)
   const [selected, setSelected] = useState<Transaction | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // The search text this page itself last wrote to the URL, until the `q` effect below has seen it come back
+  const ownWriteQ = useRef<string | undefined>(undefined)
 
-  console.log("render TransactionsPage", transactions.length, "search:", search)
+  const { data, loading, error, retry } = useTransactionPage({ q, page, pageSize: PAGE_SIZE })
 
-  const term = search.trim().toLowerCase()
-  const filtered = transactions.filter((t) => {
-    return (
-      t.merchantName.toLowerCase().includes(term) ||
-      t.id.toLowerCase().includes(term) ||
-      t.cardBrand.toLowerCase().includes(term) ||
-      t.status.toLowerCase().includes(term)
-    )
-  })
-
-  if (loading) {
-    return (
-      <div className="app-loading">
-        <Spin size="large" />
-      </div>
-    )
+  // Only typing starts this timer, so a URL change on its own (Back button, pasted link) never writes back to the URL.
+  // The URL gets the search text once typing pauses, on page 1 (page 7 of the old search means nothing for a new one).
+  // `replace` keeps each search term out of the history, so Back still goes through pages and visits.
+  const handleSearchChange = (value: string) => {
+    setInput(value)
+    clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      const term = value.trim()
+      // Read the URL as it is now: `searchParams` from this render is up to 300 ms old, and writing it back would
+      // undo a page click made while the timer was pending.
+      // Typing only a space (or reverting to the same text) must not bounce the user back to page 1.
+      const currentQ = parseListParams(new URLSearchParams(window.location.search)).q
+      if (currentQ !== term) {
+        ownWriteQ.current = term
+        setSearchParams(buildListSearch({ q: term, page: 1 }), { replace: true })
+      }
+    }, SEARCH_DEBOUNCE_MS)
   }
+
+  // The search text in the URL changed on its own (Back to another search, a pasted link): show it in the input and
+  // drop the pending write, which belonged to the old text. A change to the page alone does not run this: the typed
+  // text stays in the input and its pending write still applies, so the box and the URL end up agreeing.
+  // The trim comparison keeps a trailing space the user typed.
+  // The page's own write also changes `q`, and must not run this: a key typed between the write and this effect
+  // would be overwritten and its pending write cancelled. `ownWriteQ` marks that echo and is cleared once seen,
+  // so a later Back to the same text still counts as an outside change.
+  useEffect(() => {
+    if (q === ownWriteQ.current) {
+      ownWriteQ.current = undefined
+      return
+    }
+    ownWriteQ.current = undefined
+    clearTimeout(searchTimer.current)
+    setInput((current) => (current.trim() === q ? current : q))
+  }, [q])
+
+  useEffect(() => () => clearTimeout(searchTimer.current), [])
+
+  // A link to a page past the end (page=999) loads an empty page; move to the last real page instead
+  useEffect(() => {
+    if (!data || loading || data.page !== page) return
+    const lastPage = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
+    if (page > lastPage) setSearchParams(buildListSearch({ q, page: lastPage }), { replace: true })
+  }, [data, loading, page, q, setSearchParams])
 
   return (
     <>
@@ -41,15 +78,58 @@ export const TransactionsPage = () => {
           style={{ width: 320 }}
           prefix={<SearchOutlined />}
           allowClear
+          aria-label="Search transactions"
           placeholder="Search merchant, id, card, status..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={input}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </header>
 
-      <SummaryBar transactions={filtered} />
+      {error && (
+        <Alert
+          className="list-alert"
+          type="error"
+          showIcon
+          message="Could not load transactions"
+          description={error.message}
+          action={
+            <Button size="small" onClick={retry}>
+              Retry
+            </Button>
+          }
+        />
+      )}
 
-      <TransactionList transactions={filtered} onSelect={setSelected} />
+      {!data && loading && (
+        <div className="app-loading">
+          <Spin size="large" />
+        </div>
+      )}
+
+      {data && (
+        // Keeps showing the previous results (dimmed by the spinner) while the next page loads. After a failed
+        // request they stay too, but dimmed, so they don't pass for the results of the search typed in the box.
+        <Spin spinning={loading}>
+          <div className={error ? "results-stale" : undefined}>
+            <SummaryBar total={data.total} totalProcessed={data.totalProcessed} />
+
+            <TransactionList transactions={data.transactions} onSelect={setSelected} />
+
+            {data.total === 0 && !loading && <p className="empty-state">No transactions match your search.</p>}
+
+            <div className="pagination-bar">
+              <Pagination
+                current={page}
+                pageSize={PAGE_SIZE}
+                total={data.total}
+                showSizeChanger={false}
+                hideOnSinglePage
+                onChange={(next) => setSearchParams(buildListSearch({ q, page: next }))}
+              />
+            </div>
+          </div>
+        </Spin>
+      )}
 
       <TransactionModal transaction={selected} onClose={() => setSelected(null)} />
     </>
