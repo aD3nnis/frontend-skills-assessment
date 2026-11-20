@@ -4,14 +4,11 @@ import { SearchOutlined } from "@ant-design/icons"
 
 import { SummaryBar } from "../components/SummaryBar"
 import { TransactionList } from "../components/TransactionList"
-import { TransactionModal } from "../components/TransactionModal"
 import { useTransactions } from "../hooks/useTransactions"
-import type { Transaction } from "../models/transaction"
 
 export const TransactionsPage = () => {
   const { transactions, loading } = useTransactions()
   const [search, setSearch] = useState("")
-  const [selected, setSelected] = useState<Transaction | null>(null)
 
   console.log("render TransactionsPage", transactions.length, "search:", search)
 
@@ -49,9 +46,7 @@ export const TransactionsPage = () => {
 
       <SummaryBar transactions={filtered} />
 
-      <TransactionList transactions={filtered} onSelect={setSelected} />
-
-      <TransactionModal transaction={selected} onClose={() => setSelected(null)} />
+      <TransactionList transactions={filtered} />
     </>
   )
 }
