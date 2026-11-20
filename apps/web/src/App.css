@@ -68,6 +68,11 @@ body {
   margin-bottom: 12px;
 }
 
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .app-header {
   display: flex;
   align-items: center;

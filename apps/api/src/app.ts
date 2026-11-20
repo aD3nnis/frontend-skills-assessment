@@ -1,9 +1,11 @@
 import express from "express"
-import type { NextFunction, Request, Response } from "express"
+import type { Request, Response } from "express"
 import cors from "cors"
 
 import type { TransactionService } from "./services/transaction-service.js"
+import { errorHandler } from "./utils/error-handler.js"
 import { parseListQuery } from "./utils/list-query.js"
+import { validateNewTransaction } from "./utils/validation.js"
 
 // Split from index.ts so the routes can be tested on a throwaway port without starting the real server
 export const createApp = (transactionService: TransactionService) => {
@@ -29,8 +31,11 @@ export const createApp = (transactionService: TransactionService) => {
   })
 
   app.post("/api/transactions", (req: Request, res: Response) => {
-    const { merchantName, cardBrand, amount } = req.body
-    const transaction = transactionService.create({ merchantName, cardBrand, amount })
+    const result = validateNewTransaction(req.body)
+    if (!result.ok) {
+      return res.status(400).json({ error: "Invalid transaction", fields: result.errors })
+    }
+    const transaction = transactionService.create(result.value)
     res.status(201).json(transaction)
   })
 
@@ -42,11 +47,7 @@ export const createApp = (transactionService: TransactionService) => {
     res.json(transaction)
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    console.error(err)
-    res.status(500).json({ error: err.message, stack: err.stack })
-  })
+  app.use(errorHandler)
 
   return app
 }
