@@ -60,6 +60,10 @@ body {
   margin-top: 0;
 }
 
+.transaction-detail-actions {
+  margin-top: 16px;
+}
+
 .form-field {
   margin-bottom: 12px;
 }

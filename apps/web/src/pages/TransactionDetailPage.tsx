@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { Button, Descriptions, Result, Spin, Tag } from "antd"
 
 import { useTransaction } from "../hooks/useTransaction"
@@ -10,7 +10,8 @@ export const TransactionDetailPage = () => {
   const { id = "" } = useParams()
   const { transaction, error, loading, reload } = useTransaction(id)
 
-  const backLink = <Link to="/">← Back to transactions</Link>
+  const navigate = useNavigate()
+  const goBack = () => navigate("/")
 
   if (loading) {
     return (
@@ -26,7 +27,11 @@ export const TransactionDetailPage = () => {
         status="404"
         title="Transaction not found"
         subTitle={`There is no transaction with the id "${id}".`}
-        extra={backLink}
+        extra={
+          <Button type="primary" onClick={goBack}>
+            Back to transactions
+          </Button>
+        }
       />
     )
   }
@@ -41,7 +46,9 @@ export const TransactionDetailPage = () => {
           <Button key="retry" type="primary" onClick={reload}>
             Try again
           </Button>,
-          <span key="back">{backLink}</span>,
+          <Button key="back" onClick={goBack}>
+            Back to transactions
+          </Button>,
         ]}
       />
     )
@@ -49,7 +56,6 @@ export const TransactionDetailPage = () => {
 
   return (
     <div className="transaction-detail">
-      <p>{backLink}</p>
       <h2 className="mono">{transaction.id}</h2>
       <Descriptions
         column={1}
@@ -74,6 +80,11 @@ export const TransactionDetailPage = () => {
           { key: "date", label: "Date", children: formatDate(transaction.createdAt) },
         ]}
       />
+      <div className="transaction-detail-actions">
+        <Button type="primary" onClick={goBack}>
+          Back to transactions
+        </Button>
+      </div>
     </div>
   )
 }
