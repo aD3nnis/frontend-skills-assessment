@@ -5,7 +5,7 @@ import { Alert, Button, Form, Input, Select, message } from "antd"
 import { CardBrand } from "../models/transaction"
 import { ApiError, createTransaction } from "../services/transaction-service"
 import { formatCurrency } from "../utils/format"
-import { MAX_AMOUNT, parseAmount, validateAmount } from "../utils/money"
+import { MAX_AMOUNT, MAX_MERCHANT_NAME_LENGTH, parseAmount, validateAmount } from "../utils/money"
 
 interface FormValues {
   merchantName: string
@@ -43,6 +43,7 @@ export const NewTransactionPage = () => {
       } else {
         setError(err instanceof Error ? err.message : "Something went wrong")
       }
+    } finally {
       setSubmitting(false)
     }
   }
@@ -66,10 +67,14 @@ export const NewTransactionPage = () => {
           name="merchantName"
           rules={[
             { required: true, whitespace: true, message: "Merchant name is required" },
-            { max: 100, message: "Merchant name must be at most 100 characters" },
+            {
+              max: MAX_MERCHANT_NAME_LENGTH,
+              message: `Merchant name must be at most ${MAX_MERCHANT_NAME_LENGTH} characters`,
+            },
           ]}
         >
-          <Input placeholder="Merchant name" maxLength={101} />
+          {/* +1 so an over-long paste still triggers the rule above instead of being silently cut */}
+          <Input placeholder="Merchant name" maxLength={MAX_MERCHANT_NAME_LENGTH + 1} />
         </Form.Item>
 
         <Form.Item label="Card brand" name="cardBrand">

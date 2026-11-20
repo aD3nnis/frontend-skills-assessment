@@ -1,5 +1,7 @@
 // Mirrors MAX_AMOUNT in apps/api/src/utils/validation.ts (no shared package, so change both).
 export const MAX_AMOUNT = 1_000_000
+// Mirrors MAX_MERCHANT_NAME_LENGTH in apps/api/src/utils/validation.ts.
+export const MAX_MERCHANT_NAME_LENGTH = 100
 
 // Digits with an optional 1-2 digit fraction. Rejects "1e3", "-5", "12.345" and "" up front, which
 // parseFloat/parseInt would silently accept as 1, -5, 12.345 and NaN.
