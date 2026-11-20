@@ -9,5 +9,4 @@ const requireEnv = (name: string): string => {
   return value
 }
 
-export const getProcessorApiKey = (): string => requireEnv("PROCESSOR_API_KEY")
 export const getProcessorWebhookSecret = (): string => requireEnv("PROCESSOR_WEBHOOK_SECRET")
