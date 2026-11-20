@@ -74,13 +74,16 @@ export const NewTransactionPage = () => {
           rules={[
             { required: true, whitespace: true, message: "Merchant name is required" },
             {
+              // The API trims before checking length, so measure the trimmed value here too
+              transform: (value: string | undefined) => value?.trim(),
               max: MAX_MERCHANT_NAME_LENGTH,
               message: `Merchant name must be at most ${MAX_MERCHANT_NAME_LENGTH} characters`,
             },
           ]}
         >
-          {/* +1 so an over-long paste still triggers the rule above instead of being silently cut */}
-          <Input placeholder="Merchant name" maxLength={MAX_MERCHANT_NAME_LENGTH + 1} />
+          {/* No maxLength: the rule above measures the trimmed value, so a cap on the raw text could cut real
+              characters (a paste with leading spaces) without any error. An over-long name shows the error instead. */}
+          <Input placeholder="Merchant name" />
         </Form.Item>
 
         <Form.Item label="Card brand" name="cardBrand">
