@@ -20,7 +20,7 @@ export const TransactionsPage = () => {
   // The search text this page itself last wrote to the URL, until the `q` effect below has seen it come back
   const ownWriteQ = useRef<string | undefined>(undefined)
 
-  const { data, dataMatches, loading, error, retry } = useTransactionPage({ q, page, pageSize: PAGE_SIZE })
+  const { data, loading, error, retry } = useTransactionPage({ q, page, pageSize: PAGE_SIZE })
 
   // Only typing starts this timer, so a URL change on its own (Back button, pasted link) never writes back to the URL.
   // The URL gets the search text once typing pauses, on page 1 (page 7 of the old search means nothing for a new one).
@@ -62,12 +62,10 @@ export const TransactionsPage = () => {
 
   // A link to a page past the end (page=999) loads an empty page; move to the last real page instead
   useEffect(() => {
-    // `dataMatches`, not `data.page === page`: after a failed request `loading` is false but `data` can still be an
-    // earlier search's result, and its total says nothing about this one
-    if (!data || loading || !dataMatches) return
+    if (!data || loading || data.page !== page) return
     const lastPage = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
     if (page > lastPage) setSearchParams(buildListSearch({ q, page: lastPage }), { replace: true })
-  }, [data, dataMatches, loading, page, q, setSearchParams])
+  }, [data, loading, page, q, setSearchParams])
 
   return (
     <>
