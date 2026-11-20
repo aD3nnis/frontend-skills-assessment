@@ -1,9 +1,10 @@
 import express from "express"
-import type { NextFunction, Request, Response } from "express"
+import type { Request, Response } from "express"
 import cors from "cors"
 
 import { PORT } from "./config.js"
 import { createTransactionService } from "./services/transaction-service.js"
+import { errorHandler } from "./utils/error-handler.js"
 import { validateNewTransaction } from "./utils/validation.js"
 
 const app = express()
@@ -44,11 +45,7 @@ app.get("/api/transactions/:id", (req: Request, res: Response) => {
   res.json(transaction)
 })
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(err)
-  res.status(500).json({ error: err.message, stack: err.stack })
-})
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT} (${transactionService.getAll().length} transactions)`)

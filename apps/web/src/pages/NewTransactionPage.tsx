@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Alert, Button, Form, Input, Select, message } from "antd"
 
 import { CardBrand } from "../models/transaction"
 import { ApiError, createTransaction } from "../services/transaction-service"
+import { splitFieldErrors } from "../utils/field-errors"
 import { formatCurrency } from "../utils/format"
 import { MAX_AMOUNT, MAX_MERCHANT_NAME_LENGTH, parseAmount, validateAmount } from "../utils/money"
 
@@ -13,17 +14,22 @@ interface FormValues {
   amount: string
 }
 
+const FORM_FIELDS = ["merchantName", "cardBrand", "amount"] as const satisfies readonly (keyof FormValues)[]
+
 const CARD_BRAND_OPTIONS = Object.values(CardBrand).map((brand) => ({ value: brand, label: brand }))
 
 export const NewTransactionPage = () => {
   const navigate = useNavigate()
   const [form] = Form.useForm<FormValues>()
   const [submitting, setSubmitting] = useState(false)
+  const inFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (values: FormValues) => {
-    // Guards against a double Enter/click before the disabled state renders.
-    if (submitting) return
+    // A ref, not the `submitting` state: antd validates asynchronously, so a second Enter can reach
+    // this function before React re-renders, and the state captured by this closure is still false.
+    if (inFlight.current) return
+    inFlight.current = true
     setSubmitting(true)
     setError(null)
     try {
@@ -35,15 +41,15 @@ export const NewTransactionPage = () => {
       message.success(`Created transaction for ${formatCurrency(created.amount)}`)
       navigate("/")
     } catch (err) {
-      if (err instanceof ApiError && Object.keys(err.fields).length > 0) {
-        // Server-side rules are the source of truth; surface them on the matching inputs.
-        form.setFields(
-          (Object.entries(err.fields) as [keyof FormValues, string][]).map(([name, msg]) => ({ name, errors: [msg] })),
-        )
-      } else {
-        setError(err instanceof Error ? err.message : "Something went wrong")
-      }
+      const { known, unknown } =
+        err instanceof ApiError ? splitFieldErrors(err.fields, FORM_FIELDS) : { known: [], unknown: [] }
+      // Server-side rules are the source of truth; surface them on the matching inputs.
+      form.setFields(known.map(({ name, message }) => ({ name, errors: [message] })))
+      // Anything the form cannot attach to an input, or no field errors at all, goes in the alert.
+      if (unknown.length > 0) setError(unknown.join(". "))
+      else if (known.length === 0) setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
+      inFlight.current = false
       setSubmitting(false)
     }
   }

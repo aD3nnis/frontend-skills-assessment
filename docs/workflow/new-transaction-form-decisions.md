@@ -73,6 +73,14 @@ Checked the diff against this file and Task 3. All criteria met except "whole fl
 - Left as is: the `"12"` string test cannot fail (see break-it table); the 1,000,000 cap and 100-character name limit were not asked for in Task 3 (a real payment over $1M gets a 400, so the cap is a policy choice); Cancel button and success toast are small additions; `.5`, `5.` and `1,000` are rejected on purpose.
 - New note: created transactions get `surcharge: 0`, so `totalSurcharge` in the summary ignores them (also under With more time).
 
+## Code review (`/code-review medium main`, 2026-11-19)
+10 findings, none blocking. Three fixed, the rest skipped:
+- Fixed: unknown server field errors were swallowed (`NewTransactionPage.tsx`). `splitFieldErrors` (`utils/field-errors.ts`) separates errors for form inputs from the rest; the rest go in the alert. Test written first: failed with "Failed to load url ./field-errors", passes now (3 tests).
+- Fixed: the `if (submitting)` double-submit guard read a stale closure. Now a `useRef` flag. Not covered by a test (the web workspace has no jsdom or testing-library); checked by reading only.
+- Fixed: malformed JSON got a 500 with a stack trace. New `utils/error-handler.ts` answers parser errors with their 4xx status (400 `{"error":"Invalid JSON body"}`) and keeps the 500 path for everything else; `index.ts` uses it. Test written first (3 tests), and curl of `{bad` against the API returned `400 {"error":"Invalid JSON body"}`. Other 500s still return the stack trace (Task 5 / ship-no-ship).
+- Skipped, low: POST 400 route wiring still untested (`index.ts` listens on import); client length rule counts untrimmed whitespace; error alert stays until the next submit; error body fields not shape-checked; created transactions get surcharge 0; `let cents` sentinel in `validation.ts`; field-error type duplicated between web and API.
+- After the fixes: API 21 and web 29 tests pass, lint 0 errors, both typechecks clean.
+
 ## Map
 - Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
 
