@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import type { Transaction } from "../models/transaction"
-import { fetchTransactionById } from "../services/transaction-service"
+import { TransactionNotFoundError, fetchTransactionById } from "../services/transaction-service"
 
 interface Result {
   id: string
@@ -23,7 +23,10 @@ export const useTransaction = (id: string) => {
         if (!stale) setResult({ id, transaction, error: null })
       },
       (e: unknown) => {
-        if (!stale) setResult({ id, transaction: null, error: e instanceof Error ? e : new Error(String(e)) })
+        if (stale) return
+        // The page shows a generic message, so log the cause for whoever debugs it (not-found is an expected outcome)
+        if (!(e instanceof TransactionNotFoundError)) console.error(`Failed to load transaction ${id}`, e)
+        setResult({ id, transaction: null, error: e instanceof Error ? e : new Error(String(e)) })
       }
     )
     return () => {
