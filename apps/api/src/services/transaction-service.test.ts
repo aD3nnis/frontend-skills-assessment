@@ -67,7 +67,7 @@ describe("getSummary on the shipped data", () => {
 })
 
 // Fixture rows with explicit fields so search and ordering cases can be targeted
-const row = (id: string, over: Partial<Transaction> & { status?: string } = {}): Transaction => ({
+const row = (id: string, over: Omit<Partial<Transaction>, "status"> & { status?: string } = {}): Transaction => ({
   ...make(id, over.status ?? "APPROVED", over.total ?? 10),
   ...over,
   status: (over.status ?? "APPROVED") as TransactionStatus,
