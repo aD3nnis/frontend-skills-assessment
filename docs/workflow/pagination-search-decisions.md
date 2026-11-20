@@ -3,7 +3,7 @@ Date: 2026-11-19 · [Spec](pagination-search-spec.md) · [Plan](pagination-searc
 
 Branch: worktree-pagination-search
 Type: Feature
-Phase: Ship
+Phase: Close
 
 ## Detours and switches
 - 2026-11-19: the worktree's branch was first cut from `origin/main` (the initial commit, without the two merged fixes), so I reset it to local `main` (400e561) before any work. `.claude/` and `docs/workflow/map*` are git-excluded locally, so they were copied in from the main checkout.
