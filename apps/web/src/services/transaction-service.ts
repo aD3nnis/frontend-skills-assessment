@@ -35,7 +35,9 @@ export const createTransaction = async (input: NewTransactionInput): Promise<Tra
   if (!rsp.ok) {
     // The body may not be JSON (proxy error page), so don't let parsing mask the real failure.
     const body = await rsp.json().catch(() => ({}))
-    throw new ApiError(rsp.status, body.error ?? "Could not create the transaction", body.fields)
+    // `?.` / `?? {}` because valid JSON can still be `null` or have `fields: null`, which the
+    // constructor's default (undefined only) would not replace.
+    throw new ApiError(rsp.status, body?.error ?? "Could not create the transaction", body?.fields ?? {})
   }
   return rsp.json()
 }

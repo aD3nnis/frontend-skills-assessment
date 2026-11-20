@@ -67,16 +67,22 @@ Each line was broken, the test file run, and the line restored with `git checkou
 - Not confirmed that the list shows the new row after `navigate("/")`; Task 1 may change how the list loads.
 - `apps/api/src/index.ts:44-47` still returns the stack trace in a 500, including for malformed JSON.
 
+## Reviewer subagent (2026-11-19)
+Checked the diff against this file and Task 3. All criteria met except "whole flow (list shows the new row)", which is unproven.
+- Fixed: `createTransaction` threw a `TypeError` for a JSON error body of `null` or `fields: null` (`transaction-service.ts:35-38`), leaving the user with no message. Now `body?.error` and `body?.fields ?? {}`; `transaction-service.test.ts` (new) shows the two null cases failing before the fix (2 failed, 3 passed) and passing after. API 18 and web 26 tests pass, lint 0 errors, web typecheck clean.
+- Left as is: the `"12"` string test cannot fail (see break-it table); the 1,000,000 cap and 100-character name limit were not asked for in Task 3 (a real payment over $1M gets a 400, so the cap is a policy choice); Cancel button and success toast are small additions; `.5`, `5.` and `1,000` are rejected on purpose.
+- New note: created transactions get `surcharge: 0`, so `totalSurcharge` in the summary ignores them (also under With more time).
+
 ## Map
 - Deferred: the user agreed to defer on 2026-11-19. Tasks 1 (pagination, new list contract) and 4 (detail page) will change the documented components and data flow again, so `/map` should run once after they land. Facts this change moved, meanwhile: the POST data-flow row (response can be a 400 with field errors; `transaction-service.ts:18` has shifted), the API's responsibility (it now validates input), and `utils/money.ts` among the web helpers. The map was also already stale on "no tests exist".
 
 ## Not verified
 - The form has not been driven in a browser by Claude; the user was given a by-hand checklist (submit empty; `12.999`, `-5`, `abc`, `1e3`, `0` rejected; `12.34` shows as 12.34 in the list, not 12; API stopped shows an error alert and the page stays).
 - The list refresh after `navigate("/")` was not checked.
-- The `reviewer` subagent and `/code-review` have not run.
+- `/code-review` has not run.
 
 ## With more time
-- New transactions still get `surchargeRate: 0` and status `APPROVED`; the seed data's rates (2.5, 3, 3.5%) are not tied to card brand, so no rule was invented.
+- New transactions still get `surchargeRate: 0` and status `APPROVED`, so the summary's `totalSurcharge` ignores them; the seed data's rates (2.5, 3, 3.5%) are not tied to card brand, so no rule was invented.
 - Malformed JSON bodies reach the global error handler, which returns a 500 with the stack trace (`apps/api/src/index.ts`); should be a 400 without the stack.
 - IDs come from `transactions.length + 1`, which breaks under deletes or concurrent creates.
 - Component tests for the form (needs jsdom and testing-library, neither is installed).
