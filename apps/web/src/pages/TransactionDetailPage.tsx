@@ -1,9 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { Button, Descriptions, Result, Spin, Tag } from "antd"
 
 import { useTransaction } from "../hooks/useTransaction"
 import { TransactionNotFoundError } from "../services/transaction-service"
 import { formatCurrency, formatDate } from "../utils/format"
+import { listSearchFromState } from "../utils/list-state"
 import { statusTagColor } from "../utils/status"
 
 export const TransactionDetailPage = () => {
@@ -11,7 +12,9 @@ export const TransactionDetailPage = () => {
   const { transaction, error, loading, reload } = useTransaction(id)
 
   const navigate = useNavigate()
-  const goBack = () => navigate("/")
+  const location = useLocation()
+  // Back to the same search and page the row was opened from; a direct visit goes to the plain list
+  const goBack = () => navigate({ pathname: "/", search: listSearchFromState(location.state) })
 
   if (loading) {
     return (
